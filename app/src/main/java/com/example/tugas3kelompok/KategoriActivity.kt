@@ -42,8 +42,8 @@ class KategoriActivity : AppCompatActivity() {
                     true
                 }
                 R.id.nav_home -> {
-                    if (this !is LoginActivity) {
-                        startActivity(Intent(this, LoginActivity::class.java))
+                    if (this !is HomeActivity) {
+                        startActivity(Intent(this, HomeActivity::class.java))
                         overridePendingTransition(R.anim.slide_in_left, R.anim.slide_out_right)
                         finish()
                     }

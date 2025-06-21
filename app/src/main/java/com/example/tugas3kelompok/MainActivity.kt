@@ -11,10 +11,14 @@ import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.content.ContextCompat
+import androidx.lifecycle.lifecycleScope
 import com.example.tugas3kelompok.database.DatabaseHelper
 import com.example.tugas3kelompok.task.Task
 import com.example.tugas3kelompok.task.TaskAdapter
 import com.example.tugas3kelompok.utils.DeadlineNotificationScheduler
+import com.example.tugas3kelompok.data.HybridDatabaseManager
+import com.example.tugas3kelompok.utils.FirebaseHelper
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -25,7 +29,8 @@ class MainActivity : AppCompatActivity() {
     private val taskList = mutableListOf<Task>()
     private lateinit var adapter: TaskAdapter
     private lateinit var dbHelper: DatabaseHelper
-
+    private lateinit var firebaseHelper: FirebaseHelper
+    private lateinit var hybridDatabaseManager: HybridDatabaseManager
     private val dateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
     private val handler = Handler(Looper.getMainLooper())
 
@@ -47,8 +52,11 @@ class MainActivity : AppCompatActivity() {
                 val taskText = data?.getStringExtra("task_text") ?: return@registerForActivityResult
                 val taskDeadline = data.getStringExtra("task_deadline") ?: return@registerForActivityResult
                 val task = Task(text = taskText, deadline = taskDeadline)
-                dbHelper.insertTask(task)
+                
+                // Use hybrid database manager for sync
+                hybridDatabaseManager.addTask(task)
                 loadTasks()
+                
             } catch (e: Exception) {
                 Toast.makeText(this, "Gagal menambah tugas: ${e.message}", Toast.LENGTH_SHORT).show()
                 e.printStackTrace()
@@ -76,8 +84,8 @@ class MainActivity : AppCompatActivity() {
                         isDone = existingTask.isDone
                     )
 
-                    // Update di database
-                    dbHelper.updateTask(updatedTask)
+                    // Update menggunakan hybrid manager
+                    hybridDatabaseManager.updateTask(updatedTask)
 
                     // Jadwalkan ulang notifikasi
                     try {
@@ -131,6 +139,12 @@ class MainActivity : AppCompatActivity() {
             
             // Initialize database
             dbHelper = DatabaseHelper(this)
+            
+            // Initialize Firebase helper
+            firebaseHelper = FirebaseHelper()
+
+            // Initialize hybrid database manager
+            hybridDatabaseManager = HybridDatabaseManager(this, dbHelper, firebaseHelper)
 
             // Initialize adapter
             adapter = TaskAdapter(
@@ -139,7 +153,7 @@ class MainActivity : AppCompatActivity() {
                 onTaskChecked = { task ->
                     try {
                         task.isDone = true
-                        dbHelper.updateTask(task)
+                        hybridDatabaseManager.updateTask(task)
                         notificationScheduler.cancelNotifications(task.id)
                         loadTasks()
                     } catch (e: Exception) {
@@ -169,7 +183,7 @@ class MainActivity : AppCompatActivity() {
                 onTaskDelete = { task ->
                     try {
                         notificationScheduler.cancelNotifications(task.id)
-                        dbHelper.deleteTask(task)
+                        hybridDatabaseManager.deleteTask(task.id)
                         loadTasks()
                     } catch (e: Exception) {
                         Toast.makeText(this, "Gagal menghapus tugas: ${e.message}", Toast.LENGTH_SHORT).show()
@@ -200,7 +214,7 @@ class MainActivity : AppCompatActivity() {
     private fun loadTasks() {
         try {
             taskList.clear()
-            taskList.addAll(dbHelper.getAllTasks())
+            taskList.addAll(hybridDatabaseManager.getAllTasks())
             adapter.notifyDataSetChanged()
         } catch (e: Exception) {
             Toast.makeText(this, "Gagal memuat daftar tugas: ${e.message}", Toast.LENGTH_SHORT).show()
@@ -260,7 +274,7 @@ class MainActivity : AppCompatActivity() {
     override fun onBackPressed() {
         try {
             super.onBackPressed()
-            val intent = Intent(this, LoginActivity::class.java)
+            val intent = Intent(this, HomeActivity::class.java)
             startActivity(intent)
             finish()
         } catch (e: Exception) {

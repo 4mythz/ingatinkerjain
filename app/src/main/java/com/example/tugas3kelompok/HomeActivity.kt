@@ -15,7 +15,7 @@ import com.example.tugas3kelompok.task.TaskAdapter
 import java.text.SimpleDateFormat
 import java.util.*
 
-class LoginActivity : AppCompatActivity() {
+class HomeActivity : AppCompatActivity() {
 
     private lateinit var viewPager: ViewPager2
     private lateinit var carouselAdapter: CarouselAdapter

@@ -6,7 +6,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/light_gray"
-    tools:context=".LoginActivity">
+    tools:context=".HomeActivity">
 
     <ScrollView
         android:id="@+id/scrollView"
@@ -21,7 +21,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:background="@color/light_gray"
-            tools:context=".LoginActivity">
+            tools:context=".HomeActivity">
 
             <!-- Carousel Container: search input menumpuk di atas carousel -->
             <FrameLayout

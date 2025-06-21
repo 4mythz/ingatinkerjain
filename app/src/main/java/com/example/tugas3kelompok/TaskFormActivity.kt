@@ -8,6 +8,8 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import com.example.tugas3kelompok.database.DatabaseHelper
+import com.example.tugas3kelompok.task.Task
 import com.example.tugas3kelompok.utils.DeadlineNotificationScheduler
 import java.text.SimpleDateFormat
 import java.util.*
@@ -18,6 +20,7 @@ class TaskFormActivity : AppCompatActivity() {
     private lateinit var btnNext: Button
     private val dateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
     private lateinit var notificationScheduler: DeadlineNotificationScheduler
+    private lateinit var dbHelper: DatabaseHelper
     private var editingTaskId: Int = -1
     private var isEditing: Boolean = false
 
@@ -25,101 +28,130 @@ class TaskFormActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_task_form)
 
-        notificationScheduler = DeadlineNotificationScheduler(this)
+        try {
+            // Initialize database and notification scheduler
+            dbHelper = DatabaseHelper(this)
+            notificationScheduler = DeadlineNotificationScheduler(this)
 
-        etTaskTitle = findViewById(R.id.etTaskTitle)
-        etTaskContent = findViewById(R.id.etTaskContent)
-        btnNext = findViewById(R.id.btnNext)
+            etTaskTitle = findViewById(R.id.etTaskTitle)
+            etTaskContent = findViewById(R.id.etTaskContent)
+            btnNext = findViewById(R.id.btnNext)
 
-        // Get task data if editing
-        editingTaskId = intent.getIntExtra("task_id", -1)
-        isEditing = intent.getBooleanExtra("is_editing", false)
-        val taskText = intent.getStringExtra("task_text")
-        val taskContent = intent.getStringExtra("task_content") ?: ""
-        val taskDeadline = intent.getStringExtra("task_deadline")
-        val position = intent.getIntExtra("task_position", -1)
+            // Get task data if editing
+            editingTaskId = intent.getIntExtra("task_id", -1)
+            isEditing = intent.getBooleanExtra("is_editing", false)
+            val taskText = intent.getStringExtra("task_text")
+            val taskContent = intent.getStringExtra("task_content") ?: ""
+            val taskDeadline = intent.getStringExtra("task_deadline")
+            val position = intent.getIntExtra("task_position", -1)
 
-        if (taskText != null) {
-            // Split task text into title and content if it contains a delimiter
-            val parts = taskText.split(" - ", limit = 2)
-            etTaskTitle.setText(parts[0])
-            if (parts.size > 1) {
-                etTaskContent.setText(parts[1])
-            } else {
-                etTaskContent.setText(taskContent)
+            if (taskText != null) {
+                // Split task text into title and content if it contains a delimiter
+                val parts = taskText.split(" - ", limit = 2)
+                etTaskTitle.setText(parts[0])
+                if (parts.size > 1) {
+                    etTaskContent.setText(parts[1])
+                } else {
+                    etTaskContent.setText(taskContent)
+                }
             }
-        }
 
-        val bottomNav = findViewById<com.google.android.material.bottomnavigation.BottomNavigationView>(R.id.bottomNav)
-        bottomNav.selectedItemId = R.id.nav_task_form
-        bottomNav.setOnItemSelectedListener { item ->
-            when (item.itemId) {
-                R.id.nav_task_form -> {
-                    // Sudah di halaman ini
-                    true
-                }
-                R.id.nav_home -> {
-                    if (this !is LoginActivity) {
-                        startActivity(Intent(this, LoginActivity::class.java))
-                        overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left) // Form ke Home: slide kanan
-                        finish()
+            val bottomNav = findViewById<com.google.android.material.bottomnavigation.BottomNavigationView>(R.id.bottomNav)
+            bottomNav.selectedItemId = R.id.nav_task_form
+            bottomNav.setOnItemSelectedListener { item ->
+                when (item.itemId) {
+                    R.id.nav_task_form -> {
+                        // Sudah di halaman ini
+                        true
                     }
-                    true
-                }
-                R.id.nav_kategori -> {
-                    if (this !is KategoriActivity) {
-                        startActivity(Intent(this, KategoriActivity::class.java))
-                        overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left) // Form ke Kategori: slide kanan sekali
-                        finish()
-                    }
-                    true
-                }
-                else -> false
-            }
-        }
-
-        btnNext.setOnClickListener {
-            val title = etTaskTitle.text.toString()
-            val content = etTaskContent.text.toString()
-            
-            if (title.isNotEmpty()) {
-                showDateTimePicker { selectedDeadline ->
-                    try {
-                        val resultIntent = Intent()
-                        val fullText = if (content.isNotEmpty()) "$title - $content" else title
-                        resultIntent.putExtra("task_text", fullText)
-                        resultIntent.putExtra("task_deadline", selectedDeadline)
-                        resultIntent.putExtra("task_position", position)
-                        resultIntent.putExtra("task_id", editingTaskId)
-                        resultIntent.putExtra("is_editing", isEditing)
-
-                        val deadlineDate = dateFormat.parse(selectedDeadline)
-                        val deadlineTimestamp = deadlineDate?.time ?: System.currentTimeMillis()
-                        
-                        // Jika sedang mengedit, batalkan notifikasi lama
-                        if (isEditing && editingTaskId != -1) {
-                            notificationScheduler.cancelNotifications(editingTaskId)
+                    R.id.nav_home -> {
+                        if (this !is HomeActivity) {
+                            startActivity(Intent(this, HomeActivity::class.java))
+                            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left) // Form ke Home: slide kanan
+                            finish()
                         }
-
-                        // Jadwalkan notifikasi baru
-                        val taskId = if (editingTaskId != -1) editingTaskId else System.currentTimeMillis().toInt()
-                        notificationScheduler.scheduleNotifications(
-                            taskId = taskId,
-                            taskTitle = title,
-                            deadlineTime = deadlineTimestamp,
-                            taskStatus = "On Progress"
-                        )
-
-                        setResult(RESULT_OK, resultIntent)
-                        finish()
-                    } catch (e: Exception) {
-                        Toast.makeText(this, "Gagal menyimpan tugas: ${e.message}", Toast.LENGTH_SHORT).show()
-                        e.printStackTrace()
+                        true
                     }
+                    R.id.nav_kategori -> {
+                        if (this !is KategoriActivity) {
+                            startActivity(Intent(this, KategoriActivity::class.java))
+                            overridePendingTransition(R.anim.slide_in_right, R.anim.slide_out_left) // Form ke Kategori: slide kanan sekali
+                            finish()
+                        }
+                        true
+                    }
+                    else -> false
                 }
-            } else {
-                Toast.makeText(this, "Judul tugas tidak boleh kosong", Toast.LENGTH_SHORT).show()
             }
+
+            btnNext.setOnClickListener {
+                val title = etTaskTitle.text.toString()
+                val content = etTaskContent.text.toString()
+                
+                if (title.isNotEmpty()) {
+                    showDateTimePicker { selectedDeadline ->
+                        try {
+                            val fullText = if (content.isNotEmpty()) "$title - $content" else title
+                            
+                            if (isEditing && editingTaskId != -1) {
+                                // Update existing task
+                                val existingTask = dbHelper.getTaskById(editingTaskId)
+                                if (existingTask != null) {
+                                    val updatedTask = existingTask.copy(
+                                        text = fullText,
+                                        deadline = selectedDeadline
+                                    )
+                                    dbHelper.updateTask(updatedTask)
+                                    
+                                    // Reschedule notifications
+                                    val deadlineDate = dateFormat.parse(selectedDeadline)
+                                    val deadlineTimestamp = deadlineDate?.time ?: System.currentTimeMillis()
+                                    notificationScheduler.cancelNotifications(editingTaskId)
+                                    notificationScheduler.scheduleNotifications(
+                                        taskId = editingTaskId,
+                                        taskTitle = title,
+                                        deadlineTime = deadlineTimestamp,
+                                        taskStatus = "On Progress"
+                                    )
+                                    
+                                    Toast.makeText(this, "Tugas berhasil diperbarui", Toast.LENGTH_SHORT).show()
+                                    finish()
+                                }
+                            } else {
+                                // Create new task
+                                val task = Task(text = fullText, deadline = selectedDeadline)
+                                val taskId = dbHelper.insertTask(task)
+                                
+                                // Schedule notifications
+                                val deadlineDate = dateFormat.parse(selectedDeadline)
+                                val deadlineTimestamp = deadlineDate?.time ?: System.currentTimeMillis()
+                                notificationScheduler.scheduleNotifications(
+                                    taskId = taskId,
+                                    taskTitle = title,
+                                    deadlineTime = deadlineTimestamp,
+                                    taskStatus = "On Progress"
+                                )
+                                
+                                Toast.makeText(this, "Tugas berhasil ditambahkan", Toast.LENGTH_SHORT).show()
+                                // Navigasi ke MainActivity untuk melihat task list terbaru
+                                val intent = Intent(this, MainActivity::class.java)
+                                intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+                                startActivity(intent)
+                                finish() // Tutup form setelah selesai
+                            }
+                        } catch (e: Exception) {
+                            Toast.makeText(this, "Gagal menyimpan tugas: ${e.message}", Toast.LENGTH_SHORT).show()
+                            e.printStackTrace()
+                        }
+                    }
+                } else {
+                    Toast.makeText(this, "Judul tugas tidak boleh kosong", Toast.LENGTH_SHORT).show()
+                }
+            }
+        } catch (e: Exception) {
+            Toast.makeText(this, "Gagal memuat form: ${e.message}", Toast.LENGTH_LONG).show()
+            e.printStackTrace()
+            finish()
         }
     }
 
@@ -173,5 +205,14 @@ class TaskFormActivity : AppCompatActivity() {
         // Set tanggal minimal hari ini
         datePicker.datePicker.minDate = currentTime
         datePicker.show()
+    }
+
+    override fun onDestroy() {
+        try {
+            super.onDestroy()
+            dbHelper.close()
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
     }
 } 

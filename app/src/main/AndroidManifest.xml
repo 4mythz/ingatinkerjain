@@ -10,6 +10,7 @@
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
 
     <application
+        android:name=".TaskManagerApplication"
         android:allowBackup="true"
         android:dataExtractionRules="@xml/data_extraction_rules"
         android:fullBackupContent="@xml/backup_rules"
@@ -35,7 +36,7 @@
         <!-- Activities bebas orientasi -->
         <activity android:name=".MainActivity"
             android:exported="false" />
-        <activity android:name=".LoginActivity"
+        <activity android:name=".HomeActivity"
             android:exported="false" />
         <activity android:name=".TaskFormActivity"
             android:exported="false" />

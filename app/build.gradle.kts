@@ -1,6 +1,7 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
+    id("com.google.gms.google-services")
 }
 
 android {
@@ -51,23 +52,18 @@ dependencies {
     // Work Manager
     implementation(libs.work.runtime.ktx)
 
-    // Retrofit
-    implementation(libs.retrofit2)
-    implementation(libs.retrofit2.converter.gson)
-
-    // OkHttp
-    implementation(libs.okhttp3)
-    implementation(libs.okhttp3.logging.interceptor)
-
     // Coroutines
     implementation(libs.kotlinx.coroutines.android)
     implementation(libs.kotlinx.coroutines.core)
-
-    // Gson
-    implementation(libs.gson)
 
     // Testing
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
+
+    //firebase
+    implementation(platform("com.google.firebase:firebase-bom:33.15.0"))
+    
+    // Firestore Database (hanya yang diperlukan)
+    implementation("com.google.firebase:firebase-firestore-ktx")
 }

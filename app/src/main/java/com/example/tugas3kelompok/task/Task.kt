@@ -5,5 +5,14 @@ data class Task(
     var text: String,
     var deadline: String,
     var isDone: Boolean = false,
-    var isOverdue: Boolean = false
+    var isOverdue: Boolean = false,
+    var lastModified: Long = System.currentTimeMillis(),
+    var syncStatus: SyncStatus = SyncStatus.PENDING,
+    var firebaseId: String? = null
 )
+
+enum class SyncStatus {
+    PENDING,    // Belum di-sync ke Firebase
+    SYNCED,     // Sudah di-sync ke Firebase
+    CONFLICT    // Ada konflik antara local dan cloud
+}

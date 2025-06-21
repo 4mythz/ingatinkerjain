@@ -4,27 +4,6 @@ import android.content.Context
 import androidx.work.*
 import com.example.tugas3kelompok.workers.DeadlineNotificationWorker
 import java.util.concurrent.TimeUnit
-import retrofit2.Retrofit
-import retrofit2.converter.gson.GsonConverterFactory
-import retrofit2.Call
-import retrofit2.http.Body
-import retrofit2.http.POST
-import retrofit2.Callback
-import retrofit2.Response
-
-// Data class untuk request
-data class NotifRequest(
-    val taskId: Int,
-    val title: String,
-    val deadline: Long,
-    val status: String
-)
-
-// Interface API
-interface NotifApiService {
-    @POST("api/notify")
-    fun sendNotif(@Body request: NotifRequest): Call<Void>
-}
 
 class DeadlineNotificationScheduler(private val context: Context) {
 
@@ -34,79 +13,60 @@ class DeadlineNotificationScheduler(private val context: Context) {
         deadlineTime: Long,
         taskStatus: String
     ) {
-        // Kirim data ke API
-        val retrofit = Retrofit.Builder()
-            .baseUrl("https://your-api-url.com/") // Ganti dengan URL API kamu
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-        val api = retrofit.create(NotifApiService::class.java)
-        val notifRequest = NotifRequest(
-            taskId = taskId,
-            title = taskTitle,
-            deadline = deadlineTime,
-            status = taskStatus
-        )
-        api.sendNotif(notifRequest).enqueue(object : Callback<Void> {
-            override fun onResponse(call: Call<Void>, response: Response<Void>) {
-                // Sukses kirim ke server
-            }
-            override fun onFailure(call: Call<Void>, t: Throwable) {
-                // Gagal kirim ke server
-            }
-        })
+        try {
+            // API call dinonaktifkan untuk sementara
+            // sendNotificationToApi(taskId, taskTitle, deadlineTime, taskStatus)
+            
+            cancelNotifications(taskId)
 
-        // Batalkan notifikasi lama terlebih dahulu
-        cancelNotifications(taskId)
+            val currentTime = System.currentTimeMillis()
+            val timeUntilDeadline = deadlineTime - currentTime
 
-        val currentTime = System.currentTimeMillis()
-        val timeUntilDeadline = deadlineTime - currentTime
+            if (timeUntilDeadline <= 0) return
 
-        // Jika deadline sudah lewat, jangan jadwalkan notifikasi
-        if (timeUntilDeadline <= 0) return
+            val threeDays = TimeUnit.DAYS.toMillis(3)
+            val oneDay = TimeUnit.DAYS.toMillis(1)
+            val sixHours = TimeUnit.HOURS.toMillis(6)
+            val oneHour = TimeUnit.HOURS.toMillis(1)
 
-        // Define notification intervals (in milliseconds)
-        val threeDays = TimeUnit.DAYS.toMillis(3)
-        val oneDay = TimeUnit.DAYS.toMillis(1)
-        val sixHours = TimeUnit.HOURS.toMillis(6)
-        val oneHour = TimeUnit.HOURS.toMillis(1)
+            val notificationTimes = mapOf(
+                threeDays to "3 hari sebelum deadline",
+                oneDay to "24 jam sebelum deadline",
+                sixHours to "6 jam sebelum deadline",
+                oneHour to "1 jam sebelum deadline"
+            )
 
-        // Schedule notifications before deadline
-        val notificationTimes = mapOf(
-            threeDays to "3 hari sebelum deadline",
-            oneDay to "24 jam sebelum deadline",
-            sixHours to "6 jam sebelum deadline",
-            oneHour to "1 jam sebelum deadline"
-        )
-
-        // Jadwalkan notifikasi sesuai interval yang tersisa
-        notificationTimes.forEach { (interval, message) ->
-            if (timeUntilDeadline > interval) {
-                val delayTime = timeUntilDeadline - interval
-                if (delayTime > 0) {  // Pastikan delay tidak negatif
-                    scheduleNotification(
-                        taskId,
-                        taskTitle,
-                        deadlineTime,
-                        taskStatus,
-                        delayTime,
-                        message,
-                        false
-                    )
+            notificationTimes.forEach { (interval, message) ->
+                if (timeUntilDeadline > interval) {
+                    val delayTime = timeUntilDeadline - interval
+                    if (delayTime > 0) {
+                        scheduleNotification(
+                            taskId,
+                            taskTitle,
+                            deadlineTime,
+                            taskStatus,
+                            delayTime,
+                            message,
+                            false
+                        )
+                    }
                 }
             }
-        }
 
-        // Schedule notification at deadline
-        if (timeUntilDeadline > 0) {
-            scheduleNotification(
-                taskId,
-                taskTitle,
-                deadlineTime,
-                "Terlewat",
-                timeUntilDeadline,
-                "",
-                true
-            )
+            if (timeUntilDeadline > 0) {
+                scheduleNotification(
+                    taskId,
+                    taskTitle,
+                    deadlineTime,
+                    "Terlewat",
+                    timeUntilDeadline,
+                    "",
+                    true
+                )
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("NotificationScheduler", "Error scheduling notifications: ${e.message}")
+            e.printStackTrace()
         }
     }
 
@@ -122,7 +82,6 @@ class DeadlineNotificationScheduler(private val context: Context) {
         try {
             val workManager = WorkManager.getInstance(context)
 
-            // Batalkan work yang ada dengan tag yang sama
             workManager.cancelAllWorkByTag("notification_${taskId}_${timeUntilDeadline}")
 
             val inputData = workDataOf(
@@ -141,7 +100,6 @@ class DeadlineNotificationScheduler(private val context: Context) {
                 .addTag("notification_${taskId}_${timeUntilDeadline}")
                 .build()
 
-            // Gunakan unique work name yang berbeda untuk setiap notifikasi
             val uniqueWorkName = "notification_${taskId}_${timeUntilDeadline}_${System.currentTimeMillis()}"
             
             workManager.enqueueUniqueWork(
@@ -150,6 +108,7 @@ class DeadlineNotificationScheduler(private val context: Context) {
                 notificationWork
             )
         } catch (e: Exception) {
+            android.util.Log.e("NotificationScheduler", "Error scheduling notification: ${e.message}")
             e.printStackTrace()
         }
     }
@@ -159,6 +118,7 @@ class DeadlineNotificationScheduler(private val context: Context) {
             val workManager = WorkManager.getInstance(context)
             workManager.cancelAllWorkByTag("task_${taskId}")
         } catch (e: Exception) {
+            android.util.Log.e("NotificationScheduler", "Error canceling notifications: ${e.message}")
             e.printStackTrace()
         }
     }
