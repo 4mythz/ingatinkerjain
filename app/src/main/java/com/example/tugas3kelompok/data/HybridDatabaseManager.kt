@@ -25,29 +25,34 @@ class HybridDatabaseManager(
     fun addTask(task: Task) {
         Log.d(TAG, "Menambahkan task: ${task.text}")
         
-        // Tambahkan ke SQLite terlebih dahulu
-        val localId = databaseHelper.insertTask(task)
-        if (localId != -1) {
-            Log.d(TAG, "Task berhasil ditambahkan ke SQLite dengan ID: $localId")
-            
-            // Update task dengan ID yang benar
-            val updatedTask = task.copy(id = localId)
-            
-            // Sinkronkan ke Firestore di background
-            CoroutineScope(Dispatchers.IO).launch {
-                try {
-                    val success = firebaseHelper.addTask(updatedTask, context)
-                    if (success) {
-                        Log.d(TAG, "Task berhasil disinkronkan ke Firestore")
-                    } else {
-                        Log.e(TAG, "Gagal sinkronkan task ke Firestore")
+        try {
+            // Tambahkan ke SQLite terlebih dahulu
+            val localId = databaseHelper.insertTask(task)
+            if (localId != -1) {
+                Log.d(TAG, "Task berhasil ditambahkan ke SQLite dengan ID: $localId")
+                
+                // Update task dengan ID yang benar
+                val updatedTask = task.copy(id = localId)
+                
+                // Sinkronkan ke Firestore di background
+                CoroutineScope(Dispatchers.IO).launch {
+                    try {
+                        Log.d(TAG, "Memulai sinkronisasi ke Firestore untuk task ID: $localId")
+                        val success = firebaseHelper.addTask(updatedTask, context)
+                        if (success) {
+                            Log.d(TAG, "Task berhasil disinkronkan ke Firestore")
+                        } else {
+                            Log.e(TAG, "Gagal sinkronkan task ke Firestore")
+                        }
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Error saat sinkronisasi ke Firestore: ${e.message}", e)
                     }
-                } catch (e: Exception) {
-                    Log.e(TAG, "Error saat sinkronisasi ke Firestore: ${e.message}", e)
                 }
+            } else {
+                Log.e(TAG, "Gagal menambahkan task ke SQLite")
             }
-        } else {
-            Log.e(TAG, "Gagal menambahkan task ke SQLite")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error dalam addTask: ${e.message}", e)
         }
     }
 

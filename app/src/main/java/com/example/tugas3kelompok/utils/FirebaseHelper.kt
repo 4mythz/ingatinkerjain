@@ -40,13 +40,14 @@ class FirebaseHelper {
 
             Log.d(TAG, "Data task yang akan disimpan: $taskMap")
 
-            // Tambahkan ke Firestore
+            // Tambahkan ke Firestore dengan document ID yang unik
+            val documentId = if (task.firebaseId != null) task.firebaseId!! else "task_${task.id}_${System.currentTimeMillis()}"
             val result = db.collection(COLLECTION_TASKS)
-                .document(task.id.toString())
+                .document(documentId)
                 .set(taskMap)
                 .await()
 
-            Log.d(TAG, "Task berhasil ditambahkan ke Firestore dengan ID: ${task.id}")
+            Log.d(TAG, "Task berhasil ditambahkan ke Firestore dengan document ID: $documentId")
             Toast.makeText(context, "Task berhasil disinkronkan ke cloud", Toast.LENGTH_SHORT).show()
             true
 
@@ -125,12 +126,14 @@ class FirebaseHelper {
                 "updatedAt" to Date()
             )
 
+            // Gunakan document ID yang konsisten
+            val documentId = if (task.firebaseId != null) task.firebaseId!! else "task_${task.id}_${System.currentTimeMillis()}"
             db.collection(COLLECTION_TASKS)
-                .document(task.id.toString())
+                .document(documentId)
                 .set(taskMap)
                 .await()
 
-            Log.d(TAG, "Task berhasil diupdate di Firestore")
+            Log.d(TAG, "Task berhasil diupdate di Firestore dengan document ID: $documentId")
             Toast.makeText(context, "Task berhasil diupdate di cloud", Toast.LENGTH_SHORT).show()
             true
 
@@ -148,14 +151,25 @@ class FirebaseHelper {
         return try {
             Log.d(TAG, "Memulai penghapusan task dari Firestore: $taskId")
             
-            db.collection(COLLECTION_TASKS)
-                .document(taskId.toString())
-                .delete()
+            // Cari document berdasarkan task ID
+            val snapshot = db.collection(COLLECTION_TASKS)
+                .whereEqualTo("id", taskId)
+                .get()
                 .await()
-
-            Log.d(TAG, "Task berhasil dihapus dari Firestore")
-            Toast.makeText(context, "Task berhasil dihapus dari cloud", Toast.LENGTH_SHORT).show()
-            true
+            
+            if (!snapshot.isEmpty) {
+                // Hapus document pertama yang ditemukan
+                val document = snapshot.documents.first()
+                document.reference.delete().await()
+                
+                Log.d(TAG, "Task berhasil dihapus dari Firestore dengan document ID: ${document.id}")
+                Toast.makeText(context, "Task berhasil dihapus dari cloud", Toast.LENGTH_SHORT).show()
+                true
+            } else {
+                Log.w(TAG, "Task dengan ID $taskId tidak ditemukan di Firestore")
+                Toast.makeText(context, "Task tidak ditemukan di cloud", Toast.LENGTH_SHORT).show()
+                false
+            }
 
         } catch (e: Exception) {
             Log.e(TAG, "Error saat hapus task: ${e.message}", e)
@@ -171,13 +185,18 @@ class FirebaseHelper {
         return try {
             Log.d(TAG, "Testing koneksi ke Firestore...")
             
-            // Coba ambil satu dokumen untuk test koneksi
-            db.collection("test")
-                .limit(1)
-                .get()
+            // Coba tulis dokumen test untuk memverifikasi write permission
+            val testData = hashMapOf(
+                "test" to true,
+                "timestamp" to System.currentTimeMillis()
+            )
+            
+            val testResult = db.collection("test")
+                .document("connection_test")
+                .set(testData)
                 .await()
-
-            Log.d(TAG, "Koneksi ke Firestore berhasil")
+            
+            Log.d(TAG, "Koneksi ke Firestore berhasil - write permission OK")
             Toast.makeText(context, "Koneksi Firebase berhasil", Toast.LENGTH_SHORT).show()
             true
 

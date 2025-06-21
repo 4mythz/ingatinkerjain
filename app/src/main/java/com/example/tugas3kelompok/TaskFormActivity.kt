@@ -11,6 +11,8 @@ import androidx.appcompat.app.AppCompatActivity
 import com.example.tugas3kelompok.database.DatabaseHelper
 import com.example.tugas3kelompok.task.Task
 import com.example.tugas3kelompok.utils.DeadlineNotificationScheduler
+import com.example.tugas3kelompok.data.HybridDatabaseManager
+import com.example.tugas3kelompok.utils.FirebaseHelper
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -21,6 +23,8 @@ class TaskFormActivity : AppCompatActivity() {
     private val dateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
     private lateinit var notificationScheduler: DeadlineNotificationScheduler
     private lateinit var dbHelper: DatabaseHelper
+    private lateinit var firebaseHelper: FirebaseHelper
+    private lateinit var hybridDatabaseManager: HybridDatabaseManager
     private var editingTaskId: Int = -1
     private var isEditing: Boolean = false
 
@@ -31,6 +35,8 @@ class TaskFormActivity : AppCompatActivity() {
         try {
             // Initialize database and notification scheduler
             dbHelper = DatabaseHelper(this)
+            firebaseHelper = FirebaseHelper()
+            hybridDatabaseManager = HybridDatabaseManager(this, dbHelper, firebaseHelper)
             notificationScheduler = DeadlineNotificationScheduler(this)
 
             etTaskTitle = findViewById(R.id.etTaskTitle)
@@ -94,14 +100,14 @@ class TaskFormActivity : AppCompatActivity() {
                             val fullText = if (content.isNotEmpty()) "$title - $content" else title
                             
                             if (isEditing && editingTaskId != -1) {
-                                // Update existing task
+                                // Update existing task using HybridDatabaseManager
                                 val existingTask = dbHelper.getTaskById(editingTaskId)
                                 if (existingTask != null) {
                                     val updatedTask = existingTask.copy(
                                         text = fullText,
                                         deadline = selectedDeadline
                                     )
-                                    dbHelper.updateTask(updatedTask)
+                                    hybridDatabaseManager.updateTask(updatedTask)
                                     
                                     // Reschedule notifications
                                     val deadlineDate = dateFormat.parse(selectedDeadline)
@@ -118,15 +124,15 @@ class TaskFormActivity : AppCompatActivity() {
                                     finish()
                                 }
                             } else {
-                                // Create new task
+                                // Create new task using HybridDatabaseManager
                                 val task = Task(text = fullText, deadline = selectedDeadline)
-                                val taskId = dbHelper.insertTask(task)
+                                hybridDatabaseManager.addTask(task)
                                 
                                 // Schedule notifications
                                 val deadlineDate = dateFormat.parse(selectedDeadline)
                                 val deadlineTimestamp = deadlineDate?.time ?: System.currentTimeMillis()
                                 notificationScheduler.scheduleNotifications(
-                                    taskId = taskId,
+                                    taskId = task.id,
                                     taskTitle = title,
                                     deadlineTime = deadlineTimestamp,
                                     taskStatus = "On Progress"

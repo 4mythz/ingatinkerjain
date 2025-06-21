@@ -7,6 +7,7 @@ import android.os.Build
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.util.Log
 import android.widget.*
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
@@ -145,6 +146,22 @@ class MainActivity : AppCompatActivity() {
 
             // Initialize hybrid database manager
             hybridDatabaseManager = HybridDatabaseManager(this, dbHelper, firebaseHelper)
+
+            // Test Firebase connection
+            lifecycleScope.launch {
+                try {
+                    val isConnected = hybridDatabaseManager.testFirebaseConnection()
+                    if (isConnected) {
+                        Log.d("MainActivity", "Firebase connection successful")
+                    } else {
+                        Log.w("MainActivity", "Firebase connection failed")
+                        Toast.makeText(this@MainActivity, "Koneksi Firebase gagal, aplikasi akan berjalan offline", Toast.LENGTH_LONG).show()
+                    }
+                } catch (e: Exception) {
+                    Log.e("MainActivity", "Error testing Firebase connection: ${e.message}", e)
+                    Toast.makeText(this@MainActivity, "Error koneksi Firebase: ${e.message}", Toast.LENGTH_LONG).show()
+                }
+            }
 
             // Initialize adapter
             adapter = TaskAdapter(
