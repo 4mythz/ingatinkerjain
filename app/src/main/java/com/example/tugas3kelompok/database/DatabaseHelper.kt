@@ -33,7 +33,7 @@ class DatabaseHelper(private val mContext: Context) : SQLiteOpenHelper(mContext,
         
         db.execSQL(createTable)
     }
-
+//tes
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
         db.execSQL("DROP TABLE IF EXISTS $TABLE_TASKS")
         onCreate(db)
