@@ -1,0 +1,159 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/light_gray"
+    tools:context=".LoginActivity">
+
+    <ScrollView
+        android:id="@+id/scrollView"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:fillViewport="true"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toTopOf="@id/bottomNav">
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/main"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:background="@color/light_gray"
+            tools:context=".LoginActivity">
+
+            <!-- Carousel Container: search input menumpuk di atas carousel -->
+            <FrameLayout
+                android:id="@+id/carouselContainer"
+                android:layout_width="0dp"
+                android:layout_height="250dp"
+                app:layout_constraintTop_toTopOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent">
+
+                <androidx.viewpager2.widget.ViewPager2
+                    android:id="@+id/viewPager"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent" />
+
+                <EditText
+                    android:id="@+id/searchInput"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:hint="@string/cari_tugas"
+                    android:inputType="text"
+                    android:background="@drawable/search_outline"
+                    android:textColor="#CCCCCC"
+                    android:textColorHint="#CCCCCC"
+                    android:padding="12dp"
+                    android:layout_margin="16dp"
+                    android:elevation="8dp" />
+            </FrameLayout>
+
+            <!-- Tombol < -->
+            <ImageButton
+                android:id="@+id/btnPrev"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:src="@drawable/ic_arrow_left"
+                android:background="@android:color/transparent"
+                android:contentDescription="Sebelumnya"
+                app:layout_constraintTop_toTopOf="@id/carouselContainer"
+                app:layout_constraintBottom_toBottomOf="@id/carouselContainer"
+                app:layout_constraintStart_toStartOf="parent" />
+
+            <!-- Tombol > -->
+            <ImageButton
+                android:id="@+id/btnNext"
+                android:layout_width="48dp"
+                android:layout_height="48dp"
+                android:src="@drawable/ic_arrow_right"
+                android:background="@android:color/transparent"
+                android:contentDescription="Selanjutnya"
+                app:layout_constraintTop_toTopOf="@id/carouselContainer"
+                app:layout_constraintBottom_toBottomOf="@id/carouselContainer"
+                app:layout_constraintEnd_toEndOf="parent" />
+
+            <!-- Kotak Display Tugas Terdekat -->
+            <LinearLayout
+                android:id="@+id/boxDisplay"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:orientation="vertical"
+                android:background="@drawable/edittext_rounded"
+                android:padding="16dp"
+                android:elevation="4dp"
+                android:layout_marginTop="12dp"
+                app:layout_constraintTop_toBottomOf="@id/carouselContainer"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent">
+
+                <!-- Baris judul -->
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                    <TextView
+                        android:id="@+id/tvHello"
+                        android:layout_width="0dp"
+                        android:layout_height="59dp"
+                        android:layout_weight="1"
+                        android:text="TO DO LIST"
+                        android:textStyle="bold"
+                        android:textSize="55sp"
+                        android:textColor="@color/black"
+                        android:fontFamily="@font/urbansketchreguler"
+                        android:includeFontPadding="false"
+                        android:letterSpacing="0"
+                        android:lineSpacingExtra="0dp" />
+
+                    <Button
+                        android:id="@+id/btnSubmit"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="@string/tambah"
+                        android:textColor="@android:color/white"
+                        android:backgroundTint="#000000"
+                        android:drawableEnd="@android:drawable/ic_input_add"
+                        android:drawablePadding="8dp"
+                        android:layout_marginTop="12dp" />
+                </LinearLayout>
+
+                <!-- Baris deadline header -->
+                <TextView
+                    android:id="@+id/tvDeadlineHeader"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/deadline_terdekat"
+                    android:textColor="@color/black"
+                    android:textSize="16sp"
+                    android:layout_marginBottom="12dp" />
+
+                <!-- Ganti ListView dengan LinearLayout untuk menampung item tugas -->
+                <LinearLayout
+                    android:id="@+id/taskPreviewContainer"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical" />
+            </LinearLayout>
+
+        </androidx.constraintlayout.widget.ConstraintLayout>
+    </ScrollView>
+
+    <com.google.android.material.bottomnavigation.BottomNavigationView
+        android:id="@+id/bottomNav"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
+        android:background="?android:attr/windowBackground"
+        app:menu="@menu/bottom_nav_menu"
+        app:itemIconTint="@color/nav_item_color"
+        app:itemTextColor="@color/nav_item_color"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"/>
+
+</androidx.constraintlayout.widget.ConstraintLayout>

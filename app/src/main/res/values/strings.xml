@@ -1,0 +1,9 @@
+<resources>
+    <string name="app_name">Ingetin Kerjain</string>
+    <string name="task_app_name">tugas3kelompo3</string>
+    <string name="todo_list">Daftar Tugas</string>
+    <string name="deadline_terdekat">Deadline terdekat saat ini</string>
+    <string name="logo">Logo</string>
+    <string name="cari_tugas">Cari tugas...</string>
+    <string name="tambah">Tambah</string>
+</resources>

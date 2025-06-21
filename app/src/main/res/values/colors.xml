@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="white">#FFFFFF</color>
+    <color name="black">#000000</color>
+    <color name="light_gray">#D3D3D3</color>
+    <color name="toolbar_background">#757575</color>
+    <color name="toolbar_title">#FFFFFF</color>
+    <color name="hint_gray">#888888</color>
+    <color name="dark_gray">#A9A9A9</color>
+    <color name="status_warning">#FFD600</color>
+    <color name="status_overdue">#FF5252</color>
+    <color name="status_completed">#43A047</color>
+    <color name="status_normal">#FFFFFF</color>
+</resources>
