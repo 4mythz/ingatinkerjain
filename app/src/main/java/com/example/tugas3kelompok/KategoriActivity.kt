@@ -14,7 +14,7 @@ class KategoriActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         binding.cardRumah.setOnClickListener {
-            startActivity(Intent(this, MainActivity::class.java))
+            startActivity(Intent(this, RumahActivity::class.java))
         }
 
         binding.cardSekolah.setOnClickListener {

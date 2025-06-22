@@ -70,8 +70,8 @@ class TaskFormActivity : AppCompatActivity() {
                 }
             }
 
-            // Set category if editing
-            if (isEditing) {
+            // Set category if editing or if category is passed from category page
+            if (isEditing || taskCategory != "Pekerjaan Lainnya") {
                 val categoryPosition = when (taskCategory) {
                     "Pekerjaan Rumah" -> 0
                     "Pekerjaan Sekolah" -> 1
@@ -171,10 +171,16 @@ class TaskFormActivity : AppCompatActivity() {
                                 )
                                 
                                 Toast.makeText(this, "Tugas berhasil ditambahkan", Toast.LENGTH_SHORT).show()
-                                // Navigasi ke MainActivity untuk melihat task list terbaru
-                                val intent = Intent(this, MainActivity::class.java)
-                                intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
-                                startActivity(intent)
+                                // Navigasi ke halaman kategori yang sesuai
+                                val categoryIntent = when (category) {
+                                    "Pekerjaan Rumah" -> Intent(this, RumahActivity::class.java)
+                                    "Pekerjaan Sekolah" -> Intent(this, SekolahActivity::class.java)
+                                    "Pekerjaan Kantor" -> Intent(this, KantorActivity::class.java)
+                                    "Pekerjaan Lainnya" -> Intent(this, LainnyaActivity::class.java)
+                                    else -> Intent(this, MainActivity::class.java)
+                                }
+                                categoryIntent.flags = Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK
+                                startActivity(categoryIntent)
                                 finish() // Tutup form setelah selesai
                             }
                         } catch (e: Exception) {
