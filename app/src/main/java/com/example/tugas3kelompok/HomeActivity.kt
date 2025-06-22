@@ -30,7 +30,6 @@ class HomeActivity : AppCompatActivity() {
     }
 
     private lateinit var taskPreviewContainer: LinearLayout
-    private lateinit var btnSubmit: Button
     private lateinit var searchInput: EditText
 
     private val taskList = mutableListOf<Task>()
@@ -111,7 +110,6 @@ class HomeActivity : AppCompatActivity() {
 
             // Inisialisasi komponen lain
             taskPreviewContainer = findViewById(R.id.taskPreviewContainer)
-            btnSubmit = findViewById(R.id.btnSubmit)
             searchInput = findViewById(R.id.searchInput)
 
             dbHelper = DatabaseHelper(this)
@@ -129,16 +127,6 @@ class HomeActivity : AppCompatActivity() {
             sortTasksByDeadline()
             displayList.addAll(taskList.take(5))
             renderTasks()
-
-            btnSubmit.setOnClickListener {
-                try {
-                    val intent = Intent(this, KategoriActivity::class.java)
-                    startActivity(intent)
-                    finish()
-                } catch (e: Exception) {
-                    Toast.makeText(this, "Gagal membuka halaman kategori: ${e.message}", Toast.LENGTH_SHORT).show()
-                }
-            }
 
             // Pasang TextWatcher ke searchInput utama
             searchInput.addTextChangedListener(object : TextWatcher {
@@ -212,7 +200,6 @@ class HomeActivity : AppCompatActivity() {
 
             displayList.addAll(sorted.take(5))
             renderTasks()
-            btnSubmit.visibility = android.view.View.VISIBLE
 
         } catch (e: Exception) {
             Toast.makeText(this, "Gagal memfilter tugas: ${e.message}", Toast.LENGTH_SHORT).show()

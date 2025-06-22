@@ -34,7 +34,7 @@ class TaskAdapter(
     private val warningColor = Color.parseColor("#FFD600") // Kuning warning (untuk text status saja)
     private val overdueColor = Color.parseColor("#FF5252") // Merah (untuk text status saja)
     private val completedColor = Color.parseColor("#43A047") // Hijau (untuk text status saja)
-    private val normalColor = Color.parseColor("#FFFFFF") // Putih
+    private val normalColor = Color.parseColor("#F5F5F5") // Putih
 
     override fun getCount(): Int = tasks.size
 

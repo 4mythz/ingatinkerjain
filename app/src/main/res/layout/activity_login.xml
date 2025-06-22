@@ -110,16 +110,6 @@
                         android:letterSpacing="0"
                         android:lineSpacingExtra="0dp" />
 
-                    <Button
-                        android:id="@+id/btnSubmit"
-                        android:layout_width="wrap_content"
-                        android:layout_height="wrap_content"
-                        android:text="@string/tambah"
-                        android:textColor="@android:color/white"
-                        android:backgroundTint="#000000"
-                        android:drawableEnd="@android:drawable/ic_input_add"
-                        android:drawablePadding="8dp"
-                        android:layout_marginTop="12dp" />
                 </LinearLayout>
 
                 <!-- Baris deadline header -->
