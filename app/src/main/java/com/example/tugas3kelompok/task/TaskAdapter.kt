@@ -49,10 +49,12 @@ class TaskAdapter(
         val task = tasks[position]
         val taskContainer = view.findViewById<View>(R.id.taskContainer)
         val taskText = view.findViewById<TextView>(R.id.tvTask)
+        val categoryText = view.findViewById<TextView>(R.id.tvCategory)
         val deadlineText = view.findViewById<TextView>(R.id.tvDeadline)
         val statusText = view.findViewById<TextView>(R.id.tvStatus)
 
         taskText.text = task.text
+        categoryText.text = "Kategori: ${task.category}"
         deadlineText.text = "Deadline: ${task.deadline}"
 
         try {
@@ -135,11 +137,13 @@ class TaskAdapter(
         if (task.isDone) {
             taskText.paintFlags = taskText.paintFlags or Paint.STRIKE_THRU_TEXT_FLAG
             taskText.setTextColor(Color.GRAY)
+            categoryText.setTextColor(Color.GRAY)
             deadlineText.setTextColor(Color.GRAY)
             statusText.setTextColor(Color.GRAY)
         } else {
             taskText.paintFlags = taskText.paintFlags and Paint.STRIKE_THRU_TEXT_FLAG.inv()
             taskText.setTextColor(Color.BLACK)
+            categoryText.setTextColor(Color.DKGRAY)
             deadlineText.setTextColor(Color.DKGRAY)
             statusText.setTextColor(Color.DKGRAY)
         }

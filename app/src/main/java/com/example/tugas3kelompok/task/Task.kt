@@ -4,6 +4,7 @@ data class Task(
     var id: Int = -1,
     var text: String,
     var deadline: String,
+    var category: String = "Pekerjaan Lainnya",
     var isDone: Boolean = false,
     var isOverdue: Boolean = false,
     var lastModified: Long = System.currentTimeMillis(),

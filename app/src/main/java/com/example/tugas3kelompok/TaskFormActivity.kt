@@ -6,6 +6,8 @@ import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
+import android.widget.Spinner
+import android.widget.ArrayAdapter
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import com.example.tugas3kelompok.database.DatabaseHelper
@@ -19,6 +21,7 @@ import java.util.*
 class TaskFormActivity : AppCompatActivity() {
     private lateinit var etTaskTitle: EditText
     private lateinit var etTaskContent: EditText
+    private lateinit var spinnerCategory: Spinner
     private lateinit var btnNext: Button
     private val dateFormat = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
     private lateinit var notificationScheduler: DeadlineNotificationScheduler
@@ -41,7 +44,11 @@ class TaskFormActivity : AppCompatActivity() {
 
             etTaskTitle = findViewById(R.id.etTaskTitle)
             etTaskContent = findViewById(R.id.etTaskContent)
+            spinnerCategory = findViewById(R.id.spinnerCategory)
             btnNext = findViewById(R.id.btnNext)
+
+            // Setup category spinner
+            setupCategorySpinner()
 
             // Get task data if editing
             editingTaskId = intent.getIntExtra("task_id", -1)
@@ -49,6 +56,7 @@ class TaskFormActivity : AppCompatActivity() {
             val taskText = intent.getStringExtra("task_text")
             val taskContent = intent.getStringExtra("task_content") ?: ""
             val taskDeadline = intent.getStringExtra("task_deadline")
+            val taskCategory = intent.getStringExtra("task_category") ?: "Pekerjaan Lainnya"
             val position = intent.getIntExtra("task_position", -1)
 
             if (taskText != null) {
@@ -60,6 +68,18 @@ class TaskFormActivity : AppCompatActivity() {
                 } else {
                     etTaskContent.setText(taskContent)
                 }
+            }
+
+            // Set category if editing
+            if (isEditing) {
+                val categoryPosition = when (taskCategory) {
+                    "Pekerjaan Rumah" -> 0
+                    "Pekerjaan Sekolah" -> 1
+                    "Pekerjaan Kantor" -> 2
+                    "Pekerjaan Lainnya" -> 3
+                    else -> 3
+                }
+                spinnerCategory.setSelection(categoryPosition)
             }
 
             val bottomNav = findViewById<com.google.android.material.bottomnavigation.BottomNavigationView>(R.id.bottomNav)
@@ -93,6 +113,7 @@ class TaskFormActivity : AppCompatActivity() {
             btnNext.setOnClickListener {
                 val title = etTaskTitle.text.toString()
                 val content = etTaskContent.text.toString()
+                val category = spinnerCategory.selectedItem.toString()
                 
                 if (title.isNotEmpty()) {
                     showDateTimePicker { selectedDeadline ->
@@ -105,7 +126,8 @@ class TaskFormActivity : AppCompatActivity() {
                                 if (existingTask != null) {
                                     val updatedTask = existingTask.copy(
                                         text = fullText,
-                                        deadline = selectedDeadline
+                                        deadline = selectedDeadline,
+                                        category = category
                                     )
                                     hybridDatabaseManager.updateTask(updatedTask)
                                     
@@ -121,11 +143,21 @@ class TaskFormActivity : AppCompatActivity() {
                                     )
                                     
                                     Toast.makeText(this, "Tugas berhasil diperbarui", Toast.LENGTH_SHORT).show()
+                                    
+                                    // Send result back to MainActivity
+                                    val resultIntent = Intent().apply {
+                                        putExtra("task_text", fullText)
+                                        putExtra("task_deadline", selectedDeadline)
+                                        putExtra("task_category", category)
+                                        putExtra("task_position", intent.getIntExtra("task_position", -1))
+                                        putExtra("task_id", editingTaskId)
+                                    }
+                                    setResult(RESULT_OK, resultIntent)
                                     finish()
                                 }
                             } else {
                                 // Create new task using HybridDatabaseManager
-                                val task = Task(text = fullText, deadline = selectedDeadline)
+                                val task = Task(text = fullText, deadline = selectedDeadline, category = category)
                                 hybridDatabaseManager.addTask(task)
                                 
                                 // Schedule notifications
@@ -159,6 +191,19 @@ class TaskFormActivity : AppCompatActivity() {
             e.printStackTrace()
             finish()
         }
+    }
+
+    private fun setupCategorySpinner() {
+        val categories = arrayOf(
+            "Pekerjaan Rumah",
+            "Pekerjaan Sekolah", 
+            "Pekerjaan Kantor",
+            "Pekerjaan Lainnya"
+        )
+        
+        val adapter = ArrayAdapter(this, android.R.layout.simple_spinner_item, categories)
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        spinnerCategory.adapter = adapter
     }
 
     private fun showDateTimePicker(callback: (String) -> Unit) {

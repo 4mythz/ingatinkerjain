@@ -70,46 +70,10 @@ class MainActivity : AppCompatActivity() {
     ) { result ->
         if (result.resultCode == RESULT_OK) {
             try {
-                val data = result.data
-                val taskText = data?.getStringExtra("task_text") ?: return@registerForActivityResult
-                val taskDeadline = data.getStringExtra("task_deadline") ?: return@registerForActivityResult
-                val position = data.getIntExtra("task_position", -1)
-                val taskId = data.getIntExtra("task_id", -1)
-                
-                if (position != -1 && position < taskList.size) {
-                    val existingTask = taskList[position]
-                    val updatedTask = existingTask.copy(
-                        id = existingTask.id,
-                        text = taskText,
-                        deadline = taskDeadline,
-                        isDone = existingTask.isDone
-                    )
-
-                    // Update menggunakan hybrid manager
-                    hybridDatabaseManager.updateTask(updatedTask)
-
-                    // Jadwalkan ulang notifikasi
-                    try {
-                        val deadlineDate = dateFormat.parse(taskDeadline)
-                        val deadlineTimestamp = deadlineDate?.time ?: System.currentTimeMillis()
-                        
-                        // Batalkan notifikasi lama dan jadwalkan yang baru
-                        notificationScheduler.cancelNotifications(updatedTask.id)
-                        notificationScheduler.scheduleNotifications(
-                            taskId = updatedTask.id,
-                            taskTitle = taskText.split(" - ")[0], // Ambil judul saja
-                            deadlineTime = deadlineTimestamp,
-                            taskStatus = "On Progress"
-                        )
-                    } catch (e: Exception) {
-                        Toast.makeText(this, "Gagal menjadwalkan notifikasi: ${e.message}", Toast.LENGTH_SHORT).show()
-                        e.printStackTrace()
-                    }
-
-                    loadTasks()
-                }
+                // Simply reload tasks from database since TaskFormActivity already updated it
+                loadTasks()
             } catch (e: Exception) {
-                Toast.makeText(this, "Gagal mengubah tugas: ${e.message}", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Gagal memuat daftar tugas: ${e.message}", Toast.LENGTH_SHORT).show()
                 e.printStackTrace()
             }
         }
@@ -186,6 +150,7 @@ class MainActivity : AppCompatActivity() {
                                 putExtra("task_text", task.text)
                                 putExtra("task_content", "")
                                 putExtra("task_deadline", task.deadline)
+                                putExtra("task_category", task.category)
                                 putExtra("task_position", position)
                                 putExtra("task_id", task.id)
                                 putExtra("is_editing", true)

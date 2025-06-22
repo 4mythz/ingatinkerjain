@@ -12,13 +12,14 @@ class DatabaseHelper(private val mContext: Context) : SQLiteOpenHelper(mContext,
 
     companion object {
         private const val DATABASE_NAME = "TaskDatabase"
-        private const val DATABASE_VERSION = 5
+        private const val DATABASE_VERSION = 6
         private const val TABLE_TASKS = "tasks"
         
         // Kolom tabel
         private const val COLUMN_ID = "id"
         private const val COLUMN_TEXT = "text"
         private const val COLUMN_DEADLINE = "deadline"
+        private const val COLUMN_CATEGORY = "category"
         private const val COLUMN_IS_DONE = "is_done"
         private const val COLUMN_LAST_MODIFIED = "last_modified"
         private const val COLUMN_SYNC_STATUS = "sync_status"
@@ -31,6 +32,7 @@ class DatabaseHelper(private val mContext: Context) : SQLiteOpenHelper(mContext,
                 $COLUMN_ID INTEGER PRIMARY KEY AUTOINCREMENT,
                 $COLUMN_TEXT TEXT NOT NULL,
                 $COLUMN_DEADLINE TEXT NOT NULL,
+                $COLUMN_CATEGORY TEXT DEFAULT 'Pekerjaan Lainnya',
                 $COLUMN_IS_DONE INTEGER DEFAULT 0,
                 $COLUMN_LAST_MODIFIED TEXT NOT NULL,
                 $COLUMN_SYNC_STATUS TEXT NOT NULL,
@@ -40,7 +42,7 @@ class DatabaseHelper(private val mContext: Context) : SQLiteOpenHelper(mContext,
         
         db.execSQL(createTable)
     }
-//tes
+
     override fun onUpgrade(db: SQLiteDatabase, oldVersion: Int, newVersion: Int) {
         if (oldVersion < 5) {
             // Add new columns for sync management
@@ -53,6 +55,16 @@ class DatabaseHelper(private val mContext: Context) : SQLiteOpenHelper(mContext,
                 e.printStackTrace()
             }
         }
+        
+        if (oldVersion < 6) {
+            // Add category column
+            try {
+                db.execSQL("ALTER TABLE $TABLE_TASKS ADD COLUMN $COLUMN_CATEGORY TEXT DEFAULT 'Pekerjaan Lainnya'")
+            } catch (e: Exception) {
+                // Column might already exist, ignore error
+                e.printStackTrace()
+            }
+        }
     }
 
     fun insertTask(task: Task): Int {
@@ -60,6 +72,7 @@ class DatabaseHelper(private val mContext: Context) : SQLiteOpenHelper(mContext,
         val values = ContentValues().apply {
             put(COLUMN_TEXT, task.text)
             put(COLUMN_DEADLINE, task.deadline)
+            put(COLUMN_CATEGORY, task.category)
             put(COLUMN_IS_DONE, if (task.isDone) 1 else 0)
             put(COLUMN_LAST_MODIFIED, task.lastModified)
             put(COLUMN_SYNC_STATUS, task.syncStatus.name)
@@ -75,6 +88,7 @@ class DatabaseHelper(private val mContext: Context) : SQLiteOpenHelper(mContext,
         val values = ContentValues().apply {
             put(COLUMN_TEXT, task.text)
             put(COLUMN_DEADLINE, task.deadline)
+            put(COLUMN_CATEGORY, task.category)
             put(COLUMN_IS_DONE, if (task.isDone) 1 else 0)
             put(COLUMN_LAST_MODIFIED, task.lastModified)
             put(COLUMN_SYNC_STATUS, task.syncStatus.name)
@@ -117,12 +131,13 @@ class DatabaseHelper(private val mContext: Context) : SQLiteOpenHelper(mContext,
                     val id = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_ID))
                     val text = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_TEXT))
                     val deadline = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_DEADLINE))
+                    val category = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_CATEGORY)) ?: "Pekerjaan Lainnya"
                     val isDone = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_IS_DONE)) == 1
                     val lastModified = cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_LAST_MODIFIED))
                     val syncStatus = SyncStatus.valueOf(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_SYNC_STATUS)))
                     val firebaseId = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_FIREBASE_ID))
                     
-                    taskList.add(Task(id, text, deadline, isDone, false, lastModified, syncStatus, firebaseId))
+                    taskList.add(Task(id, text, deadline, category, isDone, false, lastModified, syncStatus, firebaseId))
                 } while (cursor.moveToNext())
             }
         }
@@ -139,12 +154,13 @@ class DatabaseHelper(private val mContext: Context) : SQLiteOpenHelper(mContext,
                 val id = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_ID))
                 val text = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_TEXT))
                 val deadline = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_DEADLINE))
+                val category = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_CATEGORY)) ?: "Pekerjaan Lainnya"
                 val isDone = cursor.getInt(cursor.getColumnIndexOrThrow(COLUMN_IS_DONE)) == 1
                 val lastModified = cursor.getLong(cursor.getColumnIndexOrThrow(COLUMN_LAST_MODIFIED))
                 val syncStatus = SyncStatus.valueOf(cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_SYNC_STATUS)))
                 val firebaseId = cursor.getString(cursor.getColumnIndexOrThrow(COLUMN_FIREBASE_ID))
                 
-                return Task(id, text, deadline, isDone, false, lastModified, syncStatus, firebaseId)
+                return Task(id, text, deadline, category, isDone, false, lastModified, syncStatus, firebaseId)
             }
         }
         
